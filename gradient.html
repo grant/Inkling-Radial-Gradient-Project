@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Inkling Gradient Challenge</title>
+    <style type="text/css" media="screen">
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        #gradient {
+            position: relative;
+            margin: 0 auto;
+            width: 400px;
+            height: 400px;
+        }
+        #gradient div {
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div id="gradient"></div>
+
+    <script type="text/javascript" charset="utf-8">
+
+        // @author Grant Timmerman
+        // @title Radial Gradient
+        // @description Generages an evenly distributed monochromatic radial gradient in a square container
+        // @tested on latest versions of Firefox, Chrome, and Safari
+
+        (function() {
+            // A radial gradient object linked to an element and an array of stop values
+            var Gradient = function(element, stops) {
+                // Constants
+                this.RING_DENSITY = 1;// The ratio between pixels/rings (More pixels for each ring means more choppy of a gradient) (Ex. 10, 100)
+
+                // Properties
+                this.element = element;
+                this.stops = stops;
+
+                return this;
+            }
+
+            Gradient.prototype = {
+                // draw() (re)draws the gradeint
+                draw: function() {
+                    this.clear();// clear the current circles
+                    var numStops = this.stops.length;// cashe the number of stops for performance and convenience
+                    if (numStops !== 0) {// don't draw anything if no stops specified
+                        var totalSize = this.element.offsetHeight;
+                        for (var i = 0; i < totalSize; i += this.RING_DENSITY) {// for each pixel ring
+                            // create div element
+                            var div = document.createElement('div');
+                            this.element.appendChild(div);
+
+                            // size of this div
+                            var size = totalSize - i;
+
+                            // styles
+                            var divStyle = div.style;
+                            divStyle.width = size + 'px';
+                            divStyle.height = divStyle.width;
+                            divStyle.left = i * .5 + 'px';
+                            divStyle.top = divStyle.left;
+                            divStyle.borderRadius = size + 'px';// standard
+                            divStyle.MozBorderRadius = size + 'px';// Mozilla
+                            divStyle.WebkitBorderRadius = size + 'px';// WebKit
+
+                            // color
+                            var gray = this.stops[0];
+                            if (numStops > 1) {// if need to create gradient
+                                // get the color of this ring
+                                var percent = i / totalSize;
+                                if (percent > 0) {// this fixes the percent so that the percent is from 0 to 1 with '1' inclusive
+                                    percent += percent / totalSize;
+                                }
+
+                                var intervalPercent = 1 / (numStops - 1);
+                                var intervalSize = totalSize * intervalPercent;
+                                var interval = Math.floor(percent / intervalPercent);// 0, 1, 2...
+                                var outerColorPercent = (i % intervalSize) / intervalSize;// How much percent of the inner circle's color to use in the mix
+                                var innerColorPercent = 1 - outerColorPercent;// How much percent of the outer circle's color to use in the mix
+
+                                gray = Math.round((this.stops[interval] * innerColorPercent) + (this.stops[interval + 1] * outerColorPercent));
+                            }
+
+                            divStyle.backgroundColor = 'rgb(' + [gray, gray, gray].join(',') + ')';
+                        }
+                    }
+                },
+
+                // clear() clears the gradient
+                clear: function() {
+                    this.element.innerHTML = '';
+                },
+
+                // pop() removes and returns the last stop
+                pop: function() {
+                    return this.stops.pop();
+                },
+
+                // push(stop1, ..., stopN) appends given stops to the end of the gradient
+                push: function() {
+                    for (var arg in arguments) {
+                        this.stops.push(parseInt(arguments[arg]));
+                    }
+                },
+
+                // shift() removes and returns the first stop
+                shift: function() {
+                    return this.stops.shift();
+                },
+
+                // unshift(stop1, ..., stopN) appends given stops to the beginning of the gradient
+                unshift: function() {
+                    for (var arg in arguments) {
+                        this.stops.unshift(parseInt(arguments[arg]));
+                    }
+                },
+
+                // reverse() reverses the order of all stops
+                reverse: function() {
+                    this.stops.reverse();
+                },
+
+                // map(callback) modifies the gradient by calling the callback for every stop
+                map: function(callback) {
+                    this.stops = this.stops.map(callback);
+                },
+
+                // sort([callback]) sorts the stops (via an optional comparison callback)
+                sort: function(callback) {
+                    var sortFunction = function(a,b) {return a - b;};
+                    // if the given callback method is provided and is a valid function
+                    if (callback !== undefined && typeof(callback) === 'function') {
+                        sortFunction = callback;
+                    }
+                    this.stops.sort(sortFunction);
+                }
+            };
+
+            // Expose Gradient to the global object
+            window.Gradient = Gradient;
+        })();
+
+        // starter method
+        (function run() {
+            var element = document.getElementById('gradient');
+            var stops = [0, 255];
+            var gradient = new Gradient(element, stops);
+            // Test 1
+            gradient.draw();
+
+            // Test 2
+            // gradient.push(0, 255);
+            // gradient.draw();
+
+            // Test 3
+            // gradient.shift();
+            // gradient.draw();
+            
+            // Test 4
+            // gradient.map(function(stop){
+            //     return Math.min(255, stop + 100);
+            // });
+            // gradient.draw();
+
+            // Test 5
+            // gradient.unshift(0);
+            // gradient.pop();
+            // gradient.draw();
+
+            // Test 6
+            // gradient.clear();
+        })();
+    </script>
+</body>
+</html>
